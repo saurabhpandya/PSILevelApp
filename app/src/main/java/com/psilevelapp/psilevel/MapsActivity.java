@@ -3,6 +3,8 @@ package com.psilevelapp.psilevel;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
 
 import androidx.fragment.app.FragmentActivity;
 import androidx.recyclerview.widget.DefaultItemAnimator;
@@ -47,7 +49,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private ArrayList<String> regionReadings;
 
-    private boolean showPSIReading;
+    private boolean isPSIReadingShowing;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -159,7 +161,7 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public boolean onMarkerClick(Marker marker) {
         String tag = (String) marker.getTag();
         Log.d(TAG, "onMarkerClick::" + tag);
-        showPSIReading = true;
+        isPSIReadingShowing = true;
         toggleList();
         ArrayList<String> regionReading = getPSILevelReading(tag);
         adapter.updateReading(regionReading);
@@ -182,16 +184,31 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     @Override
     public void onMapClick(LatLng latLng) {
-        showPSIReading = false;
+        isPSIReadingShowing = false;
         toggleList();
+
     }
 
     private void toggleList() {
-        if (!showPSIReading) {
+        if (!isPSIReadingShowing) {
+            Animation anim = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.original_to_bottom);
+            rclrvwPSILevels.setAnimation(anim);
             rclrvwPSILevels.setVisibility(View.GONE);
         } else {
+            Animation anim = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.bottom_to_original);
+            rclrvwPSILevels.setAnimation(anim);
             rclrvwPSILevels.setVisibility(View.VISIBLE);
         }
     }
 
+    @Override
+    public void onBackPressed() {
+        if (isPSIReadingShowing) {
+            isPSIReadingShowing = false;
+            toggleList();
+        } else {
+            super.onBackPressed();
+        }
+
+    }
 }
