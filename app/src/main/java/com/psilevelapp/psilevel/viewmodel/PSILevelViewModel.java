@@ -28,6 +28,12 @@ public class PSILevelViewModel extends BaseVIewModel {
         psiLevelManager = new PSILevelManager(compositeDisposable);
     }
 
+    /**
+     * It will get data from API and pass data to Activity
+     *
+     * @param success
+     * @param error
+     */
     public void getPSILevels(final Consumer<PSILevelsModel> success,
                              final Consumer<Throwable> error) {
 

@@ -40,15 +40,18 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private PSILevelViewModel viewModel;
 
+    // It will have data of regions
     private HashMap<String, LatLng> hashMapRegions;
+    // It will have data of readings of regions
     private HashMap<String, HashMap<String, Integer>> hashMapRegionsReading;
 
     private LinearLayoutManager mLayoutManager;
     private RecyclerView rclrvwPSILevels;
     private PSILevelAdapter adapter;
-
+    // It will have data of readings of regions to populate in RecyclerView
     private ArrayList<String> regionReadings;
 
+    // Used for animation
     private boolean isPSIReadingShowing;
 
     @Override
@@ -83,10 +86,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
          */
+
         setupRecyclerView();
         getData();
     }
 
+    /**
+     * Set up of Recyclerview with adapter
+     */
     private void setupRecyclerView() {
         rclrvwPSILevels = (RecyclerView) findViewById(R.id.rcyclvw);
         mLayoutManager = new LinearLayoutManager(this);
@@ -99,6 +106,12 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         rclrvwPSILevels.setAdapter(adapter);
     }
 
+    /**
+     * extracted data from hashmap to populate in recycler view
+     *
+     * @param region
+     * @return
+     */
     private ArrayList<String> getPSILevelReading(String region) {
         regionReadings = new ArrayList<>();
         HashMap<String, Integer> regionReading = hashMapRegionsReading.get(region);
@@ -113,6 +126,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         return regionReadings;
     }
 
+    /**
+     * API call to get PSI data
+     */
     private void getData() {
         viewModel = new PSILevelViewModel();
         viewModel.getPSILevels(new Consumer<PSILevelsModel>() {
@@ -131,6 +147,10 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
             }
         });
     }
+
+    /**
+     * set data to map as marker and set zoom level
+     */
 
     private void setData() {
         LatLng latLngWest = hashMapRegions.get("west");
@@ -161,27 +181,24 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     public boolean onMarkerClick(Marker marker) {
         String tag = (String) marker.getTag();
         Log.d(TAG, "onMarkerClick::" + tag);
+        // set to true as it will be shown
         isPSIReadingShowing = true;
         toggleList();
+        // It will get PSI level reading for selected marker
         ArrayList<String> regionReading = getPSILevelReading(tag);
+
+        // Updated adapter of recycler view
         adapter.updateReading(regionReading);
+        // Updated recycler view with data
         adapter.notifyDataSetChanged();
-        /*
-        switch (tag) {
-            case "West":
-                break;
-            case "East":
-                break;
-            case "North":
-                break;
-            case "South":
-                break;
-            case "Central":
-                break;
-        }*/
         return false;
     }
 
+    /**
+     * It will hide the list of reading for the opened region
+     *
+     * @param latLng
+     */
     @Override
     public void onMapClick(LatLng latLng) {
         isPSIReadingShowing = false;
@@ -189,6 +206,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     }
 
+    /**
+     * It will show / hide list
+     */
     private void toggleList() {
         if (!isPSIReadingShowing) {
             Animation anim = AnimationUtils.loadAnimation(getApplicationContext(), R.anim.original_to_bottom);
@@ -201,6 +221,9 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         }
     }
 
+    /**
+     * It will manage the list if it is opened
+     */
     @Override
     public void onBackPressed() {
         if (isPSIReadingShowing) {
