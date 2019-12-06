@@ -6,6 +6,7 @@ android {
 
     compileSdkVersion 29
     buildToolsVersion "29.0.2"
+
     defaultConfig {
         applicationId "com.psilevelapp"
         minSdkVersion 15
@@ -17,7 +18,7 @@ android {
 
     signingConfigs {
         release {
-            storeFile file('/Users/saurabhpandya/Documents/SaurabhPandya/SourceCode/PSILevel_Filese/psilevel')
+            storeFile file('/Users/fidato/Downloads/SourceCode/PSILevel_Filese/psilevel')
             storePassword 'psilevel'
             keyAlias = 'psilevel'
             keyPassword 'psilevel'
@@ -29,11 +30,24 @@ android {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             signingConfig signingConfigs.release
+            multiDexEnabled true
+            debuggable true
         }
         debug {
             applicationIdSuffix = '.debug'
+            multiDexEnabled true
         }
     }
+
+    dataBinding {
+        enabled = true
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
 }
 
 dependencies {
@@ -57,9 +71,14 @@ dependencies {
     // RxJava
     implementation 'io.reactivex.rxjava2:rxjava:2.0.4'
     implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
-    implementation "androidx.core:core-ktx:+"
+
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
+    implementation "com.android.databinding:compiler:3.0.1"
+
+    implementation 'com.android.support:multidex:1.0.3'
+
+    implementation 'androidx.recyclerview:recyclerview:1.1.0'
 
 }
 repositories {
