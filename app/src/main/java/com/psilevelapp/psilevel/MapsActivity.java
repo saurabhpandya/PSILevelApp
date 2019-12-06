@@ -1,8 +1,14 @@
 package com.psilevelapp.psilevel;
 
 import android.os.Bundle;
+import android.util.Log;
+import android.view.View;
 
 import androidx.fragment.app.FragmentActivity;
+import androidx.recyclerview.widget.DefaultItemAnimator;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -10,16 +16,21 @@ import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.LatLngBounds;
+import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 import com.psilevelapp.R;
 import com.psilevelapp.model.PSILevelsModel;
+import com.psilevelapp.psilevel.adapter.PSILevelAdapter;
 import com.psilevelapp.psilevel.viewmodel.PSILevelViewModel;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Map;
 
 import io.reactivex.functions.Consumer;
 
-public class MapsActivity extends FragmentActivity implements OnMapReadyCallback {
+public class MapsActivity extends FragmentActivity implements OnMapReadyCallback, GoogleMap.OnMarkerClickListener, GoogleMap.OnMapClickListener {
 
     private final String TAG = MapsActivity.class.getSimpleName();
 
@@ -29,6 +40,14 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
 
     private HashMap<String, LatLng> hashMapRegions;
     private HashMap<String, HashMap<String, Integer>> hashMapRegionsReading;
+
+    private LinearLayoutManager mLayoutManager;
+    private RecyclerView rclrvwPSILevels;
+    private PSILevelAdapter adapter;
+
+    private ArrayList<String> regionReadings;
+
+    private boolean showPSIReading;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,15 +72,43 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
     @Override
     public void onMapReady(GoogleMap googleMap) {
         mMap = googleMap;
-
+        mMap.setOnMapClickListener(this);
+        mMap.getUiSettings().setMapToolbarEnabled(false);
+        mMap.getUiSettings().setZoomControlsEnabled(false);
         /*
         // Add a marker in Sydney and move the camera
         LatLng sydney = new LatLng(-34, 151);
         mMap.addMarker(new MarkerOptions().position(sydney).title("Marker in Sydney"));
         mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney));
          */
-
+        setupRecyclerView();
         getData();
+    }
+
+    private void setupRecyclerView() {
+        rclrvwPSILevels = (RecyclerView) findViewById(R.id.rcyclvw);
+        mLayoutManager = new LinearLayoutManager(this);
+        mLayoutManager.setOrientation(RecyclerView.VERTICAL);
+        rclrvwPSILevels.setLayoutManager(mLayoutManager);
+        rclrvwPSILevels.setItemAnimator(new DefaultItemAnimator());
+        rclrvwPSILevels.addItemDecoration(new DividerItemDecoration(rclrvwPSILevels.getContext(), mLayoutManager.getOrientation()));
+        regionReadings = new ArrayList<>();
+        adapter = new PSILevelAdapter(regionReadings);
+        rclrvwPSILevels.setAdapter(adapter);
+    }
+
+    private ArrayList<String> getPSILevelReading(String region) {
+        regionReadings = new ArrayList<>();
+        HashMap<String, Integer> regionReading = hashMapRegionsReading.get(region);
+        Iterator iterator = regionReading.entrySet().iterator();
+        while (iterator.hasNext()) {
+            Map.Entry pair = (Map.Entry) iterator.next();
+            StringBuilder strBldr = new StringBuilder();
+            strBldr.append(pair.getKey()).append("-").append(pair.getValue());
+            regionReadings.add(strBldr.toString());
+//            iterator.remove();
+        }
+        return regionReadings;
     }
 
     private void getData() {
@@ -90,11 +137,11 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         LatLng latLngSouth = hashMapRegions.get("south");
         LatLng latLngCentral = hashMapRegions.get("central");
 
-        mMap.addMarker(new MarkerOptions().position(latLngWest).title("West"));
-        mMap.addMarker(new MarkerOptions().position(latLngEast).title("East"));
-        mMap.addMarker(new MarkerOptions().position(latLngNorth).title("North"));
-        mMap.addMarker(new MarkerOptions().position(latLngSouth).title("South"));
-        mMap.addMarker(new MarkerOptions().position(latLngCentral).title("Central"));
+        mMap.addMarker(new MarkerOptions().position(latLngWest).title("West")).setTag("West");
+        mMap.addMarker(new MarkerOptions().position(latLngEast).title("East")).setTag("East");
+        mMap.addMarker(new MarkerOptions().position(latLngNorth).title("North")).setTag("North");
+        mMap.addMarker(new MarkerOptions().position(latLngSouth).title("South")).setTag("South");
+        mMap.addMarker(new MarkerOptions().position(latLngCentral).title("Central")).setTag("Central");
 
         LatLngBounds.Builder ltlngBld = new LatLngBounds.Builder();
 
@@ -104,6 +151,47 @@ public class MapsActivity extends FragmentActivity implements OnMapReadyCallback
         ltlngBld.include(latLngSouth);
         ltlngBld.include(latLngCentral);
         mMap.animateCamera(CameraUpdateFactory.newLatLngBounds(ltlngBld.build(), 100));
+        mMap.setOnMarkerClickListener(this);
+    }
+
+
+    @Override
+    public boolean onMarkerClick(Marker marker) {
+        String tag = (String) marker.getTag();
+        Log.d(TAG, "onMarkerClick::" + tag);
+        showPSIReading = true;
+        toggleList();
+        ArrayList<String> regionReading = getPSILevelReading(tag);
+        adapter.updateReading(regionReading);
+        adapter.notifyDataSetChanged();
+        /*
+        switch (tag) {
+            case "West":
+                break;
+            case "East":
+                break;
+            case "North":
+                break;
+            case "South":
+                break;
+            case "Central":
+                break;
+        }*/
+        return false;
+    }
+
+    @Override
+    public void onMapClick(LatLng latLng) {
+        showPSIReading = false;
+        toggleList();
+    }
+
+    private void toggleList() {
+        if (!showPSIReading) {
+            rclrvwPSILevels.setVisibility(View.GONE);
+        } else {
+            rclrvwPSILevels.setVisibility(View.VISIBLE);
+        }
     }
 
 }

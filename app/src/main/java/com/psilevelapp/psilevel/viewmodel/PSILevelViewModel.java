@@ -130,7 +130,7 @@ public class PSILevelViewModel extends BaseVIewModel {
 
         regionReading.put("West", westRegionReading);
         regionReading.put("East", eastRegionReading);
-        regionReading.put("north", northRegionReading);
+        regionReading.put("North", northRegionReading);
         regionReading.put("South", southRegionReading);
         regionReading.put("Central", centralRegionReading);
 
